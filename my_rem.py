@@ -4,7 +4,6 @@ import time
 import threading
 import random
 from openpyxl import load_workbook
-import os
 from io import BytesIO
 
 def check_time_fmt(shdl_time):
