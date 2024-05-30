@@ -25,7 +25,7 @@ shift = "99:"
 for i in range(20):
     shedule.append(shift + str(i+18))
 
-bot = telebot.TeleBot('7075340872:AAG83Zf8CLnxXd2Bzj2Sr3Ualv5CkHGgSB4')
+bot = telebot.TeleBot('здесь должен быть токен')
 
 @bot.message_handler(commands=['start'])
 def start_message(message):
