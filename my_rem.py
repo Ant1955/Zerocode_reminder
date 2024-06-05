@@ -19,13 +19,13 @@ def check_time_fmt(shdl_time):
 topic = ["Пора на работу","Duolingo пока едешь", "Что нового в почте", "Можешь попить кофе",
            "Сколько задач остались?", "Иногда люди обедают", "Начадьник тебя видел?", "Составь план на завтра",
            "может уже домой?", "Зерокот что пишет?", "Домашку сделал?", "не стоит поздно ложиться спать"]
-shedule = ["8:00","8:45","9:30","11:30","12:00","15:00","17:00","18:00","19:30","20:00","21:00","23:00"]
+shedule = ["8:00","8:45","9:30","11:30","12:00","15:00","17:00","18:00","19:30","20:00","22:40","23:00"]
 
 shift = "99:"
 for i in range(20):
     shedule.append(shift + str(i+18))
 
-bot = telebot.TeleBot('здесь должен быть токен')
+bot = telebot.TeleBot('7394207851:AAFzbujyT1ekzK2I2OOOD95XXL7hK0KON9M')
 
 @bot.message_handler(commands=['start'])
 def start_message(message):
@@ -105,8 +105,18 @@ def send_reminders(chat_id):
         now = datetime.datetime.now().strftime('%H:%M')
         for k in range(len(topic)):
             if now == shedule[k]:
+                markup = telebot.types.InlineKeyboardMarkup()
+                like_button = telebot.types.InlineKeyboardButton("👍", callback_data=f"like_{k}")
+                markup.add(like_button)
                 bot.send_message(chat_id, topic[k])
                 time.sleep(61)
         time.sleep(3)
+@bot.callback_query_handler(func=lambda call: call.data.startswith("like_"))
+def callback_like(call):
+    try:
+        # Обработка лайка
+        bot.answer_callback_query(call.id, "Спасибо за лайк!")
+    except Exception as e:
+        bot.answer_callback_query(call.id, f"Произошла ошибка: {str(e)}")
 
 bot.polling(non_stop=True)
