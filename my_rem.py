@@ -1,10 +1,18 @@
-import telebot
 import datetime
-import time
-import threading
+import logging
 import random
-from openpyxl import load_workbook
+import threading
+import time
+from datetime import datetime
 from io import BytesIO
+
+import pytz
+import telebot
+from openpyxl import load_workbook
+from telegram import Update, KeyboardButton, ReplyKeyboardMarkup
+from telegram.ext import CallbackContext
+from timezonefinder import TimezoneFinder
+
 
 def check_time_fmt(shdl_time):
     if len(shdl_time) != 5:
@@ -27,10 +35,20 @@ shift = "99:"
 for i in range(20):
     shedule.append(shift + str(i + 18))
 
-bot = telebot.TeleBot('7394207851:AAFzbujyT1ekzK2I2OOOD95XXL7hK0KON9M')
+# bot = telebot.TeleBot('7394207851:AAFzbujyT1ekzK2I2OOOD95XXL7hK0KON9M')
+bot = telebot.TeleBot('7415862022:AAEvrljMTbCNODKkMjIPgP-CTnIue9fwahQ')
+
+# Включаем логирование
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+
+# Создаем экземпляр TimezoneFinder
+tf = TimezoneFinder()
 
 @bot.message_handler(commands=['start'])
-def start_message(message):
+def start_message(message, update: Update, context: CallbackContext) -> None:
+    keyboard = [[KeyboardButton("Send location", request_location=True)]]
+    reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=True)
+    update.message.reply_text('Please share your location to find out your local time.', reply_markup=reply_markup)
     bot.reply_to(message, "Привет! Я чат бот, который может напоминать учить уроки и делать домашку!\n"
                           "/shedule - задать новое расписание в чате\n"
                           "можно загрузить файл .xlsx где в первой колонке время, а во втрой тема\n"
@@ -40,6 +58,25 @@ def start_message(message):
     global reminder_thread
     reminder_thread = threading.Thread(target=send_reminders, args=(message.chat.id,))
     reminder_thread.start()
+
+
+# Обработчик местоположения
+def location(update: Update, context: CallbackContext) -> None:
+    user_location = update.message.location
+    if user_location:
+        lat = user_location.latitude
+        lon = user_location.longitude
+
+        # Определяем временную зону
+        timezone_str = tf.timezone_at(lat=lat, lng=lon)
+        if timezone_str:
+            timezone = pytz.timezone(timezone_str)
+            local_time = datetime.now(timezone)
+            update.message.reply_text(f'Your local time is: {local_time.strftime("%Y-%m-%d %H:%M:%S")}')
+        else:
+            update.message.reply_text('Could not determine your timezone.')
+    else:
+        update.message.reply_text('Location not received.')
 
 @bot.message_handler(commands=['fact'])
 def action_request(message):
